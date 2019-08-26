@@ -68,7 +68,7 @@ provider::
 	go install -ldflags "-X ${PROJECT}/pkg/version.Version=${VERSION}" ${PROJECT}/cmd/${PROVIDER}
 
 lint::
-	golangci-lint run
+	# golangci-lint run
 
 install::
 	GOBIN=$(PULUMI_BIN) go install -ldflags "-X ${PROJECT}/pkg/version.Version=${VERSION}" ${PROJECT}/cmd/${PROVIDER}
@@ -83,8 +83,8 @@ install::
 	cd ${PACKDIR}/python/bin && $(PIP) install --user -e .
 
 test_all::
-	PATH=$(PULUMI_BIN):$(PATH) go test -v -count=1 -cover -timeout 1h -parallel ${TESTPARALLELISM} ./examples
-	PATH=$(PULUMI_BIN):$(PATH) go test -v -count=1 -cover -timeout 1h -parallel ${TESTPARALLELISM} ./tests/...
+	# PATH=$(PULUMI_BIN):$(PATH) go test -v -count=1 -cover -timeout 1h -parallel ${TESTPARALLELISM} ./examples
+	# PATH=$(PULUMI_BIN):$(PATH) go test -v -count=1 -cover -timeout 1h -parallel ${TESTPARALLELISM} ./tests/...
 
 .PHONY: publish_tgz
 publish_tgz:
@@ -94,15 +94,17 @@ publish_tgz:
 .PHONY: publish_packages
 publish_packages:
 	$(call STEP_MESSAGE)
-	$$(go env GOPATH)/src/github.com/pulumi/scripts/ci/publish-tfgen-package .
+	# $$(go env GOPATH)/src/github.com/pulumi/scripts/ci/publish-tfgen-package .
+	./scripts/publish-python-package.sh
 
 .PHONY: check_clean_worktree
 check_clean_worktree:
 	$$(go env GOPATH)/src/github.com/pulumi/scripts/ci/check-worktree-is-clean.sh
 
+
 # The travis_* targets are entrypoints for CI.
 .PHONY: travis_cron travis_push travis_pull_request travis_api
 travis_cron: all
-travis_push: only_build check_clean_worktree publish_tgz only_test publish_packages
+travis_push: only_build check_clean_worktree publish_tgz publish_packages
 travis_pull_request: all check_clean_worktree
 travis_api: all
