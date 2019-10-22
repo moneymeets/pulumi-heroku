@@ -111,14 +111,16 @@ func Provider() tfbridge.ProviderInfo {
 		PreConfigureCallback: preConfigureCallback,
 		Resources:            map[string]*tfbridge.ResourceInfo{
    			"heroku_app": {Tok: makeResource(mainMod, "HerokuApp")},
-        "heroku_app_feature": {Tok: makeResource(mainMod, "HerokuAppFeature")},
-        "heroku_app_config_association": {Tok: makeResource(mainMod, "HerokuAppConfigAssociation")},
-        "heroku_addon": {Tok: makeResource(mainMod, "HerokuAddon")},
-        "heroku_addon_attachment": {Tok: makeResource(mainMod, "HerokuAddonAttachment")},
+            "heroku_app_feature": {Tok: makeResource(mainMod, "HerokuAppFeature")},
+            "heroku_app_config_association": {Tok: makeResource(mainMod, "HerokuAppConfigAssociation")},
+            "heroku_addon": {Tok: makeResource(mainMod, "HerokuAddon")},
+            "heroku_addon_attachment": {Tok: makeResource(mainMod, "HerokuAddonAttachment")},
+            "heroku_team_collaborator": {Tok: makeResource(mainMod, "HerokuTeamCollaborator")},
+            "heroku_team_member": {Tok: makeResource(mainMod, "HerokuTeamMember")},
 		},
 		DataSources: map[string]*tfbridge.DataSourceInfo{
-        "heroku_app": {Tok: makeDataSource(mainMod, "getHerokuApp")},
-				"heroku_addon": {Tok: makeDataSource(mainMod, "getHerokuAddon")},
+            "heroku_app": {Tok: makeDataSource(mainMod, "getHerokuApp")},
+			"heroku_addon": {Tok: makeDataSource(mainMod, "getHerokuAddon")},
 		},
 		JavaScript: &tfbridge.JavaScriptInfo{
 			// List any npm dependencies and their versions
