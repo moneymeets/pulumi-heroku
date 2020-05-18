@@ -1,18 +1,15 @@
-__pycache__/
+**/vendor/
+.pulumi
+**/bin/
+**/obj/
+Pulumi.*.yaml
+sdk/nodejs/node_modules
 
-# Distribution / packaging
-.Python
-dist/
-eggs/
-.eggs/
-sdist/
-wheels/
-*.egg-info/
-*.egg
+**/command-output/
 
-vendor/
+.idea/
+*.iml
 
-sdk/
+yarn.lock
 
-tmp/
-
+output/*

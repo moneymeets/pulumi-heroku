@@ -7,6 +7,7 @@ ARCHIVE_TMP_DIR=${TMP_DIR}/$(basename ${PYTHON_ARCHIVE_NAME} .tar.gz)
 
 S3_BUCKET="moneymeets-pulumi-provider"
 S3_DEST="s3://${S3_BUCKET}/$(basename ${PYTHON_ARCHIVE_NAME})"
+AWS_REGION="eu-central-1"
 
 ROOT=$(dirname $0)/..
 VERSION=$(jq -r '.version' < "${ROOT}/sdk/nodejs/bin/package.json")

@@ -17,11 +17,11 @@ package heroku
 import (
 	"unicode"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
-	"github.com/pulumi/pulumi-terraform/pkg/tfbridge"
-	"github.com/pulumi/pulumi/pkg/resource"
-	"github.com/pulumi/pulumi/pkg/tokens"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/pulumi/pulumi-terraform-bridge/v2/pkg/tfbridge"
+	"github.com/pulumi/pulumi/sdk/v2/go/common/resource"
+	"github.com/pulumi/pulumi/sdk/v2/go/common/tokens"
 	"github.com/terraform-providers/terraform-provider-heroku/heroku"
 )
 
@@ -98,34 +98,47 @@ func Provider() tfbridge.ProviderInfo {
 		License:     "Apache-2.0",
 		Homepage:    "https://pulumi.io",
 		Repository:  "https://github.com/moneymeets/pulumi-heroku",
-		Config:      map[string]*tfbridge.SchemaInfo{
-			// Add any required configuration here, or remove the example below if
-			// no additional points are required.
-			// "region": {
-			// 	Type: makeType("region", "Region"),
-			// 	Default: &tfbridge.DefaultInfo{
-			// 		EnvVars: []string{"AWS_REGION", "AWS_DEFAULT_REGION"},
-			// 	},
-			// },
+		Config: map[string]*tfbridge.SchemaInfo{
 		},
 		PreConfigureCallback: preConfigureCallback,
-		Resources:            map[string]*tfbridge.ResourceInfo{
-   			"heroku_app": {Tok: makeResource(mainMod, "HerokuApp")},
-            "heroku_app_feature": {Tok: makeResource(mainMod, "HerokuAppFeature")},
-            "heroku_app_config_association": {Tok: makeResource(mainMod, "HerokuAppConfigAssociation")},
-            "heroku_addon": {Tok: makeResource(mainMod, "HerokuAddon")},
-            "heroku_addon_attachment": {Tok: makeResource(mainMod, "HerokuAddonAttachment")},
-            "heroku_team_collaborator": {Tok: makeResource(mainMod, "HerokuTeamCollaborator")},
-            "heroku_team_member": {Tok: makeResource(mainMod, "HerokuTeamMember")},
+		Resources: map[string]*tfbridge.ResourceInfo{
+			"heroku_account_feature":                   {Tok: makeResource(mainMod, "HerokuAccountFeature")},
+			"heroku_addon":                             {Tok: makeResource(mainMod, "HerokuAddon")},
+			"heroku_addon_attachment":                  {Tok: makeResource(mainMod, "HerokuAddonAttachment")},
+			"heroku_app":                               {Tok: makeResource(mainMod, "HerokuApp")},
+			"heroku_app_config_association":            {Tok: makeResource(mainMod, "HerokuAppConfigAssociation")},
+			"heroku_app_feature":                       {Tok: makeResource(mainMod, "HerokuAppFeature")},
+			"heroku_app_release":                       {Tok: makeResource(mainMod, "HerokuAppRelease")},
+			"heroku_app_webhook":                       {Tok: makeResource(mainMod, "HerokuAppWebhook")},
+			"heroku_build":                             {Tok: makeResource(mainMod, "HerokuBuild")},
+			"heroku_cert":                              {Tok: makeResource(mainMod, "HerokuCert")},
+			"heroku_config":                            {Tok: makeResource(mainMod, "HerokuConfig")},
+			"heroku_domain":                            {Tok: makeResource(mainMod, "HerokuDomain")},
+			"heroku_drain":                             {Tok: makeResource(mainMod, "HerokuDrain")},
+			"heroku_formation":                         {Tok: makeResource(mainMod, "HerokuFormation")},
+			"heroku_pipeline":                          {Tok: makeResource(mainMod, "HerokuPipeline")},
+			"heroku_pipeline_config_var":               {Tok: makeResource(mainMod, "HerokuPipelineConfigVar")},
+			"heroku_pipeline_coupling":                 {Tok: makeResource(mainMod, "HerokuPipelineCoupling")},
+			"heroku_slug":                              {Tok: makeResource(mainMod, "HerokuSlug")},
+			"heroku_space":                             {Tok: makeResource(mainMod, "HerokuSpace")},
+			"heroku_space_app_access":                  {Tok: makeResource(mainMod, "HerokuSpaceAppAccess")},
+			"heroku_space_inbound_ruleset":             {Tok: makeResource(mainMod, "HerokuSpaceInboundRuleset")},
+			"heroku_space_peering_connection_accepter": {Tok: makeResource(mainMod, "HerokuSpacePeeringConnectionAccepter")},
+			"heroku_space_vpn_connection":              {Tok: makeResource(mainMod, "HerokuSpaceVpnConnection")},
+			"heroku_team_collaborator":                 {Tok: makeResource(mainMod, "HerokuTeamCollaborator")},
+			"heroku_team_member":                       {Tok: makeResource(mainMod, "HerokuTeamMember")},
 		},
 		DataSources: map[string]*tfbridge.DataSourceInfo{
-            "heroku_app": {Tok: makeDataSource(mainMod, "getHerokuApp")},
-			"heroku_addon": {Tok: makeDataSource(mainMod, "getHerokuAddon")},
+			"heroku_addon":              {Tok: makeDataSource(mainMod, "getHerokuAddon")},
+			"heroku_app":                {Tok: makeDataSource(mainMod, "getHerokuApp")},
+			"heroku_space":              {Tok: makeDataSource(mainMod, "getHerokuSpace")},
+			"heroku_space_peering_info": {Tok: makeDataSource(mainMod, "getHerokuSpacePeeringInfo")},
+			"heroku_team":               {Tok: makeDataSource(mainMod, "getHerokuTeam")},
 		},
 		JavaScript: &tfbridge.JavaScriptInfo{
 			// List any npm dependencies and their versions
 			Dependencies: map[string]string{
-				"@pulumi/pulumi": "latest",
+				"@pulumi/pulumi": "^2.0.0",
 			},
 			DevDependencies: map[string]string{
 				"@types/node": "^8.0.25", // so we can access strongly typed node definitions.
@@ -139,7 +152,13 @@ func Provider() tfbridge.ProviderInfo {
 		Python: &tfbridge.PythonInfo{
 			// List any Python dependencies and their version ranges
 			Requires: map[string]string{
-				"pulumi": ">=1.0.0,<2.0.0",
+				"pulumi": ">=2.0.0,<3.0.0",
+			},
+		},
+		CSharp: &tfbridge.CSharpInfo{
+			PackageReferences: map[string]string{
+				"Pulumi":                       "2.*",
+				"System.Collections.Immutable": "1.6.0",
 			},
 		},
 	}

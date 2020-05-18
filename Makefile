@@ -12,6 +12,15 @@ PROVIDER        := pulumi-resource-${PACK}
 VERSION         := $(shell scripts/get-version)
 PYPI_VERSION    := $(shell scripts/get-py-version)
 
+DOTNET_PREFIX  := $(firstword $(subst -, ,${VERSION:v%=%})) # e.g. 1.5.0
+DOTNET_SUFFIX  := $(word 2,$(subst -, ,${VERSION:v%=%}))    # e.g. alpha.1
+
+ifeq ($(strip ${DOTNET_SUFFIX}),)
+	DOTNET_VERSION := $(strip ${DOTNET_PREFIX})
+else
+	DOTNET_VERSION := $(strip ${DOTNET_PREFIX})-$(strip ${DOTNET_SUFFIX})
+endif
+
 TESTPARALLELISM := 4
 
 OS := $(shell uname)
@@ -20,19 +29,19 @@ EMPTY_TO_AVOID_SED := ""
 prepare::
 	@if test -z "${NAME}"; then echo "NAME not set"; exit 1; fi
 	@if test -z "${REPOSITORY}"; then echo "REPOSITORY not set"; exit 1; fi
-	@if test ! -d "cmd/pulumi-tfgen-x${EMPTY_TO_AVOID_SED}yz"; then "Project already prepared"; exit 1; fi
+	@if test ! -d "provider/cmd/pulumi-tfgen-x${EMPTY_TO_AVOID_SED}yz"; then "Project already prepared"; exit 1; fi
 
-	mv "cmd/pulumi-tfgen-x${EMPTY_TO_AVOID_SED}yz" cmd/pulumi-tfgen-${NAME}
-	mv "cmd/pulumi-resource-x${EMPTY_TO_AVOID_SED}yz" cmd/pulumi-resource-${NAME}
+	mv "provider/cmd/pulumi-tfgen-x${EMPTY_TO_AVOID_SED}yz" provider/cmd/pulumi-tfgen-${NAME}
+	mv "provider/cmd/pulumi-resource-x${EMPTY_TO_AVOID_SED}yz" provider/cmd/pulumi-resource-${NAME}
 
 	if [[ "${OS}" != "Darwin" ]]; then \
-		sed -i 's,${PROJECT},${REPOSITORY},g' go.mod; \
+		sed -i 's,github.com/moneymeets/pulumi-heroku,${REPOSITORY},g' provider/go.mod; \
 		find ./ ! -path './.git/*' -type f -exec sed -i 's/[x]yz/${NAME}/g' {} \; &> /dev/null; \
 	fi
 
 	# In MacOS the -i parameter needs an empty string to execute in place.
 	if [[ "${OS}" == "Darwin" ]]; then \
-		sed -i '' 's,${PROJECT},${REPOSITORY},g' go.mod; \
+		sed -i '' 's,github.com/moneymeets/pulumi-heroku,${REPOSITORY},g' provider/go.mod; \
 		find ./ ! -path './.git/*' -type f -exec sed -i '' 's/[x]yz/${NAME}/g' {} \; &> /dev/null; \
 	fi
 
@@ -40,8 +49,8 @@ prepare::
 # We set the PLUGIN_VERSION to be the same as the version we use when building
 # the provider (e.g. x.y.z-dev-... instead of x.y.zdev...)
 build:: tfgen provider
-	for LANGUAGE in "nodejs" "python" "go" ; do \
-		$(TFGEN) $$LANGUAGE --overlays overlays/$$LANGUAGE/ --out ${PACKDIR}/$$LANGUAGE/ || exit 3 ; \
+	cd provider && for LANGUAGE in "nodejs" "python" "go" "dotnet" ; do \
+		$(TFGEN) $$LANGUAGE --overlays overlays/$$LANGUAGE/ --out ../${PACKDIR}/$$LANGUAGE/ || exit 3 ; \
 	done
 	cd ${PACKDIR}/nodejs/ && \
 		yarn install && \
@@ -49,42 +58,45 @@ build:: tfgen provider
 		cp ../../README.md ../../LICENSE package.json yarn.lock ./bin/ && \
 		sed -i.bak "s/\$${VERSION}/$(VERSION)/g" ./bin/package.json
 	cd ${PACKDIR}/python/ && \
-		if [ $$(command -v pandoc) ]; then \
-			pandoc --from=markdown --to=rst --output=README.rst ../../README.md; \
-		else \
-			echo "warning: pandoc not found, not generating README.rst"; \
-			echo "" > README.rst; \
-		fi && \
+		cp ../../README.md . && \
 		$(PYTHON) setup.py clean --all 2>/dev/null && \
 		rm -rf ./bin/ ../python.bin/ && cp -R . ../python.bin && mv ../python.bin ./bin && \
 		sed -i.bak -e "s/\$${VERSION}/$(PYPI_VERSION)/g" -e "s/\$${PLUGIN_VERSION}/$(VERSION)/g" ./bin/setup.py && \
 		rm ./bin/setup.py.bak && \
 		cd ./bin && $(PYTHON) setup.py build sdist
+	cd ${PACKDIR}/dotnet/ && \
+		echo "${VERSION:v%=%}" >version.txt && \
+		dotnet build /p:Version=${DOTNET_VERSION}
+
+generate_schema:: tfgen
+	$(TFGEN) schema --out ./provider/cmd/${PROVIDER}
 
 tfgen::
-	go install -ldflags "-X ${PROJECT}/pkg/version.Version=${VERSION}" ${PROJECT}/cmd/${TFGEN}
+	cd provider && go install -ldflags "-X github.com/moneymeets/pulumi-${PACK}/provider/pkg/version.Version=${VERSION}" ${PROJECT}/provider/cmd/${TFGEN}
 
-provider::
-	go install -ldflags "-X ${PROJECT}/pkg/version.Version=${VERSION}" ${PROJECT}/cmd/${PROVIDER}
-
-lint::
-	# golangci-lint run
+provider:: generate_schema
+	cd provider && go generate cmd/${PROVIDER}/main.go
+	cd provider && go install -ldflags "-X github.com/moneymeets/pulumi-${PACK}/provider/pkg/version.Version=${VERSION}" ${PROJECT}/provider/cmd/${PROVIDER}
 
 install::
-	GOBIN=$(PULUMI_BIN) go install -ldflags "-X ${PROJECT}/pkg/version.Version=${VERSION}" ${PROJECT}/cmd/${PROVIDER}
 	[ ! -e "$(PULUMI_NODE_MODULES)/$(NODE_MODULE_NAME)" ] || rm -rf "$(PULUMI_NODE_MODULES)/$(NODE_MODULE_NAME)"
 	mkdir -p "$(PULUMI_NODE_MODULES)/$(NODE_MODULE_NAME)"
 	cp -r ${PACKDIR}/nodejs/bin/. "$(PULUMI_NODE_MODULES)/$(NODE_MODULE_NAME)"
 	rm -rf "$(PULUMI_NODE_MODULES)/$(NODE_MODULE_NAME)/node_modules"
 	cd "$(PULUMI_NODE_MODULES)/$(NODE_MODULE_NAME)" && \
-		yarn install --production && \
+		yarn install --offline --production && \
 		(yarn unlink > /dev/null 2>&1 || true) && \
 		yarn link
 	cd ${PACKDIR}/python/bin && $(PIP) install --user -e .
+	echo "Copying NuGet packages to ${PULUMI_NUGET}"
+	[ ! -e "$(PULUMI_NUGET)" ] || rm -rf "$(PULUMI_NUGET)/*"
+	find . -name '*.nupkg' -exec cp -p {} ${PULUMI_NUGET} \;
 
 test_all::
-	# PATH=$(PULUMI_BIN):$(PATH) go test -v -count=1 -cover -timeout 1h -parallel ${TESTPARALLELISM} ./examples
-	# PATH=$(PULUMI_BIN):$(PATH) go test -v -count=1 -cover -timeout 1h -parallel ${TESTPARALLELISM} ./tests/...
+	cd examples && $(GO_TEST) .
+
+test_fast::
+	cd examples && $(GO_TEST_FAST) .
 
 .PHONY: publish_tgz
 publish_tgz:
@@ -94,17 +106,14 @@ publish_tgz:
 .PHONY: publish_packages
 publish_packages:
 	$(call STEP_MESSAGE)
-	# $$(go env GOPATH)/src/github.com/pulumi/scripts/ci/publish-tfgen-package .
 	./scripts/publish-python-package.sh
+	#$$(go env GOPATH)/src/github.com/pulumi/scripts/ci/publish-tfgen-package .
+	#$$(go env GOPATH)/src/github.com/pulumi/scripts/ci/build-package-docs.sh ${PACK}
 
 .PHONY: check_clean_worktree
 check_clean_worktree:
 	$$(go env GOPATH)/src/github.com/pulumi/scripts/ci/check-worktree-is-clean.sh
 
-
-# The travis_* targets are entrypoints for CI.
-.PHONY: travis_cron travis_push travis_pull_request travis_api
-travis_cron: all
-travis_push: only_build check_clean_worktree publish_tgz publish_packages
-travis_pull_request: all check_clean_worktree
-travis_api: all
+# GitHub actions target entrypoint
+github_push_ci: only_build
+github_deploy_ci: publish_tgz publish_packages
