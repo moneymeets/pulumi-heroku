@@ -11,4 +11,4 @@ this package, please [install the Pulumi CLI first](https://pulumi.io/).
 
 To use from Python, install using `pip`:
 
-    $ pip install https://moneymeets-pulumi-provider.s3.eu-central-1.amazonaws.com/pulumi_heroku-0.0.1.tar.gz
+    $ pip install https://moneymeets-pulumi-provider.s3.eu-central-1.amazonaws.com/pulumi_heroku-0.0.4.tar.gz
