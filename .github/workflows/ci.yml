@@ -11,11 +11,11 @@ jobs:
 
       - uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 14
 
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - uses: actions/setup-go@v2
         with:
