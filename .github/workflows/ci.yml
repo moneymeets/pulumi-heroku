@@ -1,5 +1,5 @@
 name: CI
-on: [push]
+on: [ push ]
 
 jobs:
   build:
@@ -9,50 +9,40 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
-          node-version: 12
+          node-version: 14
 
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - uses: actions/setup-go@v2
         with:
-          go-version: '1.13'
-        env:
-          GOPATH: ${{ github.workspace }}
+          go-version: 1.15
 
-      - uses: actions/cache@v1
-        with:
-          path: ${{ github.workspace }}/provider/vendor/
-          key: go-${{ hashFiles('**/go.sum') }}
-
-      - name: Prepare environment
+      - name: Discover Go cache paths
+        id: go-cache-paths
         run: |
-          # Install pyenv
-          curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
-          exec $SHELL
+          echo "::set-output name=go-mod-cache::$(go env GOMODCACHE)"
+          echo "::set-output name=go-build-cache::$(go env GOCACHE)"
 
-          git clone https://github.com/pulumi/scripts ${GOPATH}/src/github.com/pulumi/scripts
-          source ${GOPATH}/src/github.com/pulumi/scripts/ci/prepare-environment.sh
-          source ${PULUMI_SCRIPTS}/ci/install-common-toolchain.sh
-          curl -L https://get.pulumi.com/ | bash
-          export PATH=$HOME/.pulumi/bin:$PATH
-          ${PULUMI_SCRIPTS}/ci/ensure-dependencies
-        shell: bash -l {0}
-        env:
-          GOPATH: ${{ github.workspace }}
+      - uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-mod-cache }}
+          key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+      - uses: actions/cache@v2
+        with:
+          path: ${{ steps.go-cache-paths.outputs.go-build-cache }}
+          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
 
       - name: Build
         run: make github_push_ci
-        env:
-          GOPATH: ${{ github.workspace }}
 
       - name: Publish SDK and plugin to S3
         run: make github_deploy_ci
         env:
-          GOPATH: ${{ github.workspace }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-central-1
