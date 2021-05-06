@@ -41,8 +41,11 @@ jobs:
         run: make github_push_ci
 
       - name: Publish SDK and plugin to S3
-        run: make github_deploy_ci
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/master" ]; then export TARGET_DIRECTORY='/feature' ; else export TARGET_DIRECTORY='/' ; fi
+          make github_deploy_ci
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-central-1
+          TARGET_S3_BUCKET: moneymeets-pulumi-provider
