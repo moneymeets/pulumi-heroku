@@ -34,61 +34,18 @@ const (
 	mainMod = "index" // the y module
 )
 
-// makeMember manufactures a type token for the package and the given module and type.
-func makeMember(mod string, mem string) tokens.ModuleMember {
-	return tokens.ModuleMember(mainPkg + ":" + mod + ":" + mem)
-}
-
-// makeType manufactures a type token for the package and the given module and type.
-func makeType(mod string, typ string) tokens.Type {
-	return tokens.Type(makeMember(mod, typ))
-}
-
-// makeDataSource manufactures a standard resource token given a module and resource name.  It
-// automatically uses the main package and names the file by simply lower casing the data source's
-// first character.
-func makeDataSource(mod string, res string) tokens.ModuleMember {
-	fn := string(unicode.ToLower(rune(res[0]))) + res[1:]
-	return makeMember(mod+"/"+fn, res)
-}
-
-// makeResource manufactures a standard resource token given a module and resource name.  It
-// automatically uses the main package and names the file by simply lower casing the resource's
-// first character.
-func makeResource(mod string, res string) tokens.Type {
-	fn := string(unicode.ToLower(rune(res[0]))) + res[1:]
-	return makeType(mod+"/"+fn, res)
-}
-
-// boolRef returns a reference to the bool argument.
-func boolRef(b bool) *bool {
-	return &b
-}
-
-// stringValue gets a string value from a property map if present, else ""
-func stringValue(vars resource.PropertyMap, prop resource.PropertyKey) string {
-	val, ok := vars[prop]
-	if ok && val.IsString() {
-		return val.StringValue()
-	}
-	return ""
-}
-
 // preConfigureCallback is called before the providerConfigure function of the underlying provider.
 // It should validate that the provider can be configured, and provide actionable errors in the case
 // it cannot be. Configuration variables can be read from `vars` using the `stringValue` function -
 // for example `stringValue(vars, "accessKey")`.
-func preConfigureCallback(vars resource.PropertyMap, c *terraform.ResourceConfig) error {
+func preConfigureCallback(vars resource.PropertyMap, c shim.ResourceConfig) error {
 	return nil
 }
-
-// managedByPulumi is a default used for some managed resources, in the absence of something more meaningful.
-var managedByPulumi = &tfbridge.DefaultInfo{Value: "Managed by Pulumi"}
 
 // Provider returns additional overlaid schema and metadata associated with the provider..
 func Provider() tfbridge.ProviderInfo {
 	// Instantiate the Terraform provider
-	p := heroku.Provider().(*schema.Provider)
+	p := shimv2.NewProvider(heroku.Provider())
 
 	// Create a Pulumi provider mapping
 	prov := tfbridge.ProviderInfo{
@@ -103,46 +60,51 @@ func Provider() tfbridge.ProviderInfo {
 		},
 		PreConfigureCallback: preConfigureCallback,
 		Resources: map[string]*tfbridge.ResourceInfo{
-			"heroku_account_feature":                   {Tok: makeResource(mainMod, "HerokuAccountFeature")},
-			"heroku_addon":                             {Tok: makeResource(mainMod, "HerokuAddon")},
-			"heroku_addon_attachment":                  {Tok: makeResource(mainMod, "HerokuAddonAttachment")},
-			"heroku_app":                               {Tok: makeResource(mainMod, "HerokuApp")},
-			"heroku_app_config_association":            {Tok: makeResource(mainMod, "HerokuAppConfigAssociation")},
-			"heroku_app_feature":                       {Tok: makeResource(mainMod, "HerokuAppFeature")},
-			"heroku_app_release":                       {Tok: makeResource(mainMod, "HerokuAppRelease")},
-			"heroku_app_webhook":                       {Tok: makeResource(mainMod, "HerokuAppWebhook")},
-			"heroku_build":                             {Tok: makeResource(mainMod, "HerokuBuild")},
-			"heroku_cert":                              {Tok: makeResource(mainMod, "HerokuCert")},
-			"heroku_config":                            {Tok: makeResource(mainMod, "HerokuConfig")},
-			"heroku_domain":                            {Tok: makeResource(mainMod, "HerokuDomain")},
-			"heroku_drain":                             {Tok: makeResource(mainMod, "HerokuDrain")},
-			"heroku_formation":                         {Tok: makeResource(mainMod, "HerokuFormation")},
-			"heroku_pipeline":                          {Tok: makeResource(mainMod, "HerokuPipeline")},
-			"heroku_pipeline_config_var":               {Tok: makeResource(mainMod, "HerokuPipelineConfigVar")},
-			"heroku_pipeline_coupling":                 {Tok: makeResource(mainMod, "HerokuPipelineCoupling")},
-			"heroku_slug":                              {Tok: makeResource(mainMod, "HerokuSlug")},
-			"heroku_space":                             {Tok: makeResource(mainMod, "HerokuSpace")},
-			"heroku_space_app_access":                  {Tok: makeResource(mainMod, "HerokuSpaceAppAccess")},
-			"heroku_space_inbound_ruleset":             {Tok: makeResource(mainMod, "HerokuSpaceInboundRuleset")},
-			"heroku_space_peering_connection_accepter": {Tok: makeResource(mainMod, "HerokuSpacePeeringConnectionAccepter")},
-			"heroku_space_vpn_connection":              {Tok: makeResource(mainMod, "HerokuSpaceVpnConnection")},
-			"heroku_team_collaborator":                 {Tok: makeResource(mainMod, "HerokuTeamCollaborator")},
-			"heroku_team_member":                       {Tok: makeResource(mainMod, "HerokuTeamMember")},
+			"heroku_account_feature":                   {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuAccountFeature")},
+			"heroku_addon":                             {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuAddon")},
+			"heroku_addon_attachment":                  {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuAddonAttachment")},
+			"heroku_app":                               {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuApp")},
+			"heroku_app_config_association":            {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuAppConfigAssociation")},
+			"heroku_app_feature":                       {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuAppFeature")},
+			"heroku_app_release":                       {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuAppRelease")},
+			"heroku_app_webhook":                       {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuAppWebhook")},
+			"heroku_build":                             {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuBuild")},
+			"heroku_cert":                              {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuCert")},
+			"heroku_collaborator":                      {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuCollaborator")},
+			"heroku_config":                            {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuConfig")},
+			"heroku_domain":                            {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuDomain")},
+			"heroku_drain":                             {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuDrain")},
+			"heroku_formation":                         {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuFormation")},
+			"heroku_pipeline":                          {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuPipeline")},
+			"heroku_pipeline_config_var":               {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuPipelineConfigVar")},
+			"heroku_pipeline_coupling":                 {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuPipelineCoupling")},
+			"heroku_review_app_config":                 {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuReviewAppConfig")},
+			"heroku_slug":                              {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuSlug")},
+			"heroku_space":                             {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuSpace")},
+			"heroku_space_app_access":                  {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuSpaceAppAccess")},
+			"heroku_space_inbound_ruleset":             {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuSpaceInboundRuleset")},
+			"heroku_space_peering_connection_accepter": {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuSpacePeeringConnectionAccepter")},
+			"heroku_space_vpn_connection":              {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuSpaceVpnConnection")},
+			"heroku_ssl":                               {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuSsl")},
+			"heroku_team_collaborator":                 {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuTeamCollaborator")},
+			"heroku_team_member":                       {Tok: tfbridge.MakeResource(mainPkg, mainMod, "HerokuTeamMember")},
 		},
 		DataSources: map[string]*tfbridge.DataSourceInfo{
-			"heroku_addon":              {Tok: makeDataSource(mainMod, "getHerokuAddon")},
-			"heroku_app":                {Tok: makeDataSource(mainMod, "getHerokuApp")},
-			"heroku_space":              {Tok: makeDataSource(mainMod, "getHerokuSpace")},
-			"heroku_space_peering_info": {Tok: makeDataSource(mainMod, "getHerokuSpacePeeringInfo")},
-			"heroku_team":               {Tok: makeDataSource(mainMod, "getHerokuTeam")},
+			"heroku_addon":              {Tok: tfbridge.MakeDataSource(mainPkg, mainMod, "getHerokuAddon")},
+			"heroku_app":                {Tok: tfbridge.MakeDataSource(mainPkg, mainMod, "getHerokuApp")},
+			"heroku_pipeline":           {Tok: tfbridge.MakeDataSource(mainPkg, mainMod, "getHerokuPipeline")},
+			"heroku_space":              {Tok: tfbridge.MakeDataSource(mainPkg, mainMod, "getHerokuSpace")},
+			"heroku_space_peering_info": {Tok: tfbridge.MakeDataSource(mainPkg, mainMod, "getHerokuSpacePeeringInfo")},
+			"heroku_team":               {Tok: tfbridge.MakeDataSource(mainPkg, mainMod, "getHerokuTeam")},
+			"heroku_team_members":       {Tok: tfbridge.MakeDataSource(mainPkg, mainMod, "getHerokuTeamMembers")},
 		},
 		JavaScript: &tfbridge.JavaScriptInfo{
 			// List any npm dependencies and their versions
 			Dependencies: map[string]string{
-				"@pulumi/pulumi": "^2.0.0",
+				"@pulumi/pulumi": "^3.0.0",
 			},
 			DevDependencies: map[string]string{
-				"@types/node": "^8.0.25", // so we can access strongly typed node definitions.
+				"@types/node": "^10.0.0", // so we can access strongly typed node definitions.
 				"@types/mime": "^2.0.0",
 			},
 			// See the documentation for tfbridge.OverlayInfo for how to lay out this
@@ -153,33 +115,26 @@ func Provider() tfbridge.ProviderInfo {
 		Python: &tfbridge.PythonInfo{
 			// List any Python dependencies and their version ranges
 			Requires: map[string]string{
-				"pulumi": ">=2.0.0,<3.0.0",
+				"pulumi": ">=3.0.0,<4.0.0",
 			},
+		},
+		Golang: &tfbridge.GolangInfo{
+			ImportBasePath: filepath.Join(
+				fmt.Sprintf("github.com/pulumi/pulumi-%[1]s/sdk/", mainPkg),
+				tfbridge.GetModuleMajorVersion(version.Version),
+				"go",
+				mainPkg,
+			),
+			GenerateResourceContainerTypes: true,
 		},
 		CSharp: &tfbridge.CSharpInfo{
 			PackageReferences: map[string]string{
-				"Pulumi":                       "2.*",
-				"System.Collections.Immutable": "1.6.0",
+				"Pulumi": "3.*",
 			},
 		},
 	}
 
-	// For all resources with name properties, we will add an auto-name property.  Make sure to skip those that
-	// already have a name mapping entry, since those may have custom overrides set above (e.g., for length).
-	const nameProperty = "name"
-	for resname, res := range prov.Resources {
-		if schema := p.ResourcesMap[resname]; schema != nil {
-			// Only apply auto-name to input properties (Optional || Required) named `name`
-			if tfs, has := schema.Schema[nameProperty]; has && (tfs.Optional || tfs.Required) {
-				if _, hasfield := res.Fields[nameProperty]; !hasfield {
-					if res.Fields == nil {
-						res.Fields = make(map[string]*tfbridge.SchemaInfo)
-					}
-					res.Fields[nameProperty] = tfbridge.AutoName(nameProperty, 255)
-				}
-			}
-		}
-	}
+	prov.SetAutonaming(255, "-")
 
 	return prov
 }
