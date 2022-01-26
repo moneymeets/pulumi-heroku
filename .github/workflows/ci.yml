@@ -8,6 +8,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v2
         with:
@@ -42,7 +44,7 @@ jobs:
 
       - name: Publish SDK and plugin to S3
         run: |
-          if [ "$GITHUB_REF" != "refs/heads/master" ]; then export TARGET_DIRECTORY='/feature' ; else export TARGET_DIRECTORY='/' ; fi
+          if [ "$GITHUB_REF" != "refs/heads/master" ]; then export TARGET_DIRECTORY='/feature/' ; else export TARGET_DIRECTORY='/' ; fi
           make github_deploy_ci
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
