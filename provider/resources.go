@@ -15,14 +15,15 @@
 package heroku
 
 import (
-	"unicode"
+	"fmt"
+	"path/filepath"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/pulumi/pulumi-terraform-bridge/v2/pkg/tfbridge"
-	"github.com/pulumi/pulumi/sdk/v2/go/common/resource"
-	"github.com/pulumi/pulumi/sdk/v2/go/common/tokens"
-	"github.com/terraform-providers/terraform-provider-heroku/heroku"
+	"github.com/pulumi/pulumi-terraform-bridge/v3/pkg/tfbridge"
+	shim "github.com/pulumi/pulumi-terraform-bridge/v3/pkg/tfshim"
+	shimv2 "github.com/pulumi/pulumi-terraform-bridge/v3/pkg/tfshim/sdk-v2"
+	"github.com/moneymeets/pulumi-heroku/provider/pkg/version"
+	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	"github.com/heroku/terraform-provider-heroku/v4/heroku"
 )
 
 // all of the token components used below.

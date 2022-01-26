@@ -1,5 +1,5 @@
-module github.com/moneymeets/pulumi-heroku/scripts/
+module github.com/moneymeets/pulumi-heroku/scripts
 
-go 1.15
+go 1.16
 
-require github.com/pulumi/pulumi/sdk/v2 v2.0.0
+require github.com/pulumi/pulumi/sdk/v3 v3.22.1
