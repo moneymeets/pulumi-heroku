@@ -5,7 +5,7 @@ TMP_DIR="tmp"
 PYTHON_ARCHIVE_NAME=$(ls sdk/python/bin/dist/*.tar.gz)
 ARCHIVE_TMP_DIR=${TMP_DIR}/$(basename ${PYTHON_ARCHIVE_NAME} .tar.gz)
 
-S3_DEST="s3://${TARGET_S3_BUCKET}${TARGET_DIRECTORY}/$(basename ${PYTHON_ARCHIVE_NAME})"
+S3_DEST="s3://${TARGET_S3_BUCKET}${TARGET_DIRECTORY}$(basename ${PYTHON_ARCHIVE_NAME})"
 S3_HTTP_URL="https://${TARGET_S3_BUCKET}.s3.${AWS_DEFAULT_REGION}.amazonaws.com${TARGET_DIRECTORY}"
 
 ROOT=$(dirname $0)/..

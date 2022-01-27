@@ -49,7 +49,7 @@ prepare::
 # We set the PLUGIN_VERSION to be the same as the version we use when building
 # the provider (e.g. x.y.z-dev-... instead of x.y.zdev...)
 build:: tfgen provider
-	cd provider && for LANGUAGE in "nodejs" "python" "go" "dotnet" ; do \
+	cd provider && for LANGUAGE in "nodejs" "python" "go" ; do \
 		$(TFGEN) $$LANGUAGE --overlays overlays/$$LANGUAGE/ --out ../${PACKDIR}/$$LANGUAGE/ || exit 3 ; \
 	done
 	cd ${PACKDIR}/nodejs/ && \
@@ -61,12 +61,9 @@ build:: tfgen provider
 		cp ../../README.md . && \
 		$(PYTHON) setup.py clean --all 2>/dev/null && \
 		rm -rf ./bin/ ../python.bin/ && cp -R . ../python.bin && mv ../python.bin ./bin && \
-		sed -i.bak -e "s/\$${VERSION}/$(PYPI_VERSION)/g" -e "s/\$${PLUGIN_VERSION}/$(VERSION)/g" ./bin/setup.py && \
+		sed -i.bak -e 's/^VERSION = .*/VERSION = "$(PYPI_VERSION)"/g' -e 's/^PLUGIN_VERSION = .*/PLUGIN_VERSION = "$(VERSION)"/g' ./bin/setup.py && \
 		rm ./bin/setup.py.bak && \
 		cd ./bin && $(PYTHON) setup.py build sdist
-	cd ${PACKDIR}/dotnet/ && \
-		echo "${VERSION:v%=%}" >version.txt && \
-		dotnet build /p:Version=${DOTNET_VERSION}
 
 generate_schema:: tfgen
 	$(TFGEN) schema --out ./provider/cmd/${PROVIDER}

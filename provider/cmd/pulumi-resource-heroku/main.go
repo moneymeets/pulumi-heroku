@@ -17,7 +17,7 @@
 package main
 
 import (
-	"github.com/pulumi/pulumi-terraform-bridge/v2/pkg/tfbridge"
+	"github.com/pulumi/pulumi-terraform-bridge/v3/pkg/tfbridge"
 
 	heroku "github.com/moneymeets/pulumi-heroku/provider"
 	"github.com/moneymeets/pulumi-heroku/provider/pkg/version"

@@ -1,12 +1,15 @@
 module github.com/moneymeets/pulumi-heroku/provider
 
-go 1.15
+go 1.16
 
-replace github.com/Azure/go-autorest => github.com/Azure/go-autorest v12.4.3+incompatible
+replace (
+	github.com/hashicorp/go-getter v1.5.0 => github.com/hashicorp/go-getter v1.4.0
+	github.com/hashicorp/terraform-plugin-sdk/v2 => github.com/pulumi/terraform-plugin-sdk/v2 v2.0.0-20210629210550-59d24255d71f
+)
 
 require (
-	github.com/hashicorp/terraform-plugin-sdk v1.9.1
-	github.com/pulumi/pulumi-terraform-bridge/v2 v2.3.0
-	github.com/pulumi/pulumi/sdk/v2 v2.2.1
-	github.com/terraform-providers/terraform-provider-heroku v1.9.1-0.20200424171519-434ce64ef0ca
+	github.com/hashicorp/terraform-plugin-sdk v1.15.0 // indirect
+	github.com/heroku/terraform-provider-heroku/v4 v4.8.0
+	github.com/pulumi/pulumi-terraform-bridge/v3 v3.16.1
+	github.com/pulumi/pulumi/sdk/v3 v3.22.0
 )
