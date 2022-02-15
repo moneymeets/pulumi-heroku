@@ -12,4 +12,5 @@ require (
 	github.com/heroku/terraform-provider-heroku/v4 v4.8.0
 	github.com/pulumi/pulumi-terraform-bridge/v3 v3.16.1
 	github.com/pulumi/pulumi/sdk/v3 v3.22.0
+	github.com/docker/docker v1.6.1
 )
