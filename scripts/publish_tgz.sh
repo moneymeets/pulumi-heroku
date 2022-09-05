@@ -4,7 +4,7 @@ set -o nounset -o errexit -o pipefail
 
 ROOT=$(dirname $0)/..
 PUBLISH_GOOS=("linux" "windows" "darwin")
-PUBLISH_GOARCH=("amd64")
+PUBLISH_GOARCH=("amd64", "arm64")
 
 echo "Publishing plugin archive to s3://${TARGET_S3_BUCKET}${TARGET_DIRECTORY}:"
 for OS in "${PUBLISH_GOOS[@]}"
