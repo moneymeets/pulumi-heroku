@@ -1,3 +1,7 @@
+# ⛔️ DEPRECATED
+
+This repository is no longer maintained. Please consider using [pulumi-heroku](https://github.com/pulumiverse/pulumi-heroku) from [pulumiverse](https://github.com/pulumiverse) instead.
+
 # Heroku provider
 
 WIP
